@@ -8,18 +8,24 @@ if (!uri) {
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
-// Fix: declare the global type
+// ✅ Use NodeJS.Global to extend types for globalThis
 declare global {
-  // eslint-disable-next-line no-var
-  var _mongoClientPromise: Promise<MongoClient> | undefined;
+  namespace NodeJS {
+    interface Global {
+      _mongoClientPromise?: Promise<MongoClient>;
+    }
+  }
 }
 
+// @ts-ignore
+const globalWithMongo = global as NodeJS.Global;
+
 if (process.env.NODE_ENV === 'development') {
-  if (!globalThis._mongoClientPromise) {
+  if (!globalWithMongo._mongoClientPromise) {
     client = new MongoClient(uri, { tlsAllowInvalidCertificates: true });
-    globalThis._mongoClientPromise = client.connect();
+    globalWithMongo._mongoClientPromise = client.connect();
   }
-  clientPromise = globalThis._mongoClientPromise;
+  clientPromise = globalWithMongo._mongoClientPromise!;
 } else {
   client = new MongoClient(uri, { tlsAllowInvalidCertificates: true });
   clientPromise = client.connect();
