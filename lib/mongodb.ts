@@ -8,7 +8,6 @@ if (!uri) {
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
-// Use globalThis to store the Mongo client promise
 const globalWithMongo = globalThis as {
   _mongoClientPromise?: Promise<MongoClient>;
 };
@@ -20,11 +19,12 @@ if (process.env.NODE_ENV === 'development') {
   }
   clientPromise = globalWithMongo._mongoClientPromise!;
 } else {
-  client = new MongoClient(uri, { tlsAllowInvalidCertificates: true });
+  // 🟢 Production: Use default secure options (NO tlsAllowInvalidCertificates)
+  client = new MongoClient(uri);
   clientPromise = client.connect();
 }
 
 export async function connectToDatabase() {
   const client = await clientPromise;
-  return client.db();
+  return client.db(); // defaults to 'hirehub' if given in URI
 }
