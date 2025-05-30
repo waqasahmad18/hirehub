@@ -1,5 +1,5 @@
-import { connectToDatabase } from'./../../../lib/mongodb'; // use absolute path if alias set up
-import Navbar from '../components/Navbar';
+import { connectToDatabase } from '../../../lib/mongodb';
+import Navbar from './../components/Navbar';
 import { ObjectId } from 'mongodb';
 
 type Job = {
@@ -11,8 +11,14 @@ type Job = {
 };
 
 export default async function JobsPage() {
-  const db = await connectToDatabase();
-  const jobs = await db.collection<Job>('jobs').find().sort({ createdAt: -1 }).toArray();
+  let jobs: Job[] = [];
+
+  try {
+    const db = await connectToDatabase();
+    jobs = await db.collection<Job>('jobs').find().sort({ createdAt: -1 }).toArray();
+  } catch (error) {
+    console.error('❌ Failed to load jobs:', error);
+  }
 
   return (
     <>
@@ -22,20 +28,20 @@ export default async function JobsPage() {
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Available Jobs</h1>
 
           <div className="grid gap-4">
-            {jobs.map((job) => (
-              <div
-                key={job._id.toString()}
-                className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
-              >
-                <h2 className="text-xl font-semibold text-blue-700">{job.title}</h2>
-                <p className="text-gray-700">{job.company} - {job.location}</p>
-                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded mt-2 inline-block">
-                  {job.type}
-                </span>
-              </div>
-            ))}
-
-            {jobs.length === 0 && (
+            {jobs.length > 0 ? (
+              jobs.map((job) => (
+                <div
+                  key={job._id.toString()}
+                  className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
+                >
+                  <h2 className="text-xl font-semibold text-blue-700">{job.title}</h2>
+                  <p className="text-gray-700">{job.company} - {job.location}</p>
+                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded mt-2 inline-block">
+                    {job.type}
+                  </span>
+                </div>
+              ))
+            ) : (
               <p className="text-gray-500">No jobs posted yet.</p>
             )}
           </div>
