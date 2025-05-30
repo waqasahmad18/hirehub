@@ -1,10 +1,18 @@
-import { connectToDatabase } from './../../../lib/mongodb';
-
+import { connectToDatabase } from'./../../../lib/mongodb'; // use absolute path if alias set up
 import Navbar from '../components/Navbar';
+import { ObjectId } from 'mongodb';
+
+type Job = {
+  _id: ObjectId;
+  title: string;
+  company: string;
+  location: string;
+  type: string;
+};
 
 export default async function JobsPage() {
   const db = await connectToDatabase();
-  const jobs = await db.collection('jobs').find().sort({ createdAt: -1 }).toArray();
+  const jobs = await db.collection<Job>('jobs').find().sort({ createdAt: -1 }).toArray();
 
   return (
     <>
@@ -14,9 +22,9 @@ export default async function JobsPage() {
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Available Jobs</h1>
 
           <div className="grid gap-4">
-            {jobs.map((job: any) => (
+            {jobs.map((job) => (
               <div
-                key={job._id}
+                key={job._id.toString()}
                 className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
               >
                 <h2 className="text-xl font-semibold text-blue-700">{job.title}</h2>
