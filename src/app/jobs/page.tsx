@@ -2,7 +2,7 @@ import { connectToDatabase } from '../../../lib/mongodb';
 import Navbar from './../components/Navbar';
 import { ObjectId } from 'mongodb';
 
-export const dynamic = 'force-dynamic'; // ✅ Important: Disable caching for Vercel
+export const dynamic = 'force-dynamic'; // Disable static cache in Vercel
 
 type Job = {
   _id: ObjectId;
@@ -13,18 +13,13 @@ type Job = {
 };
 
 export default async function JobsPage() {
-  let jobs: Job[] = [];
+  const db = await connectToDatabase();
 
-  try {
-    const db = await connectToDatabase();
-    jobs = await db
-      .collection<Job>('jobs')
-      .find()
-      .sort({ createdAt: -1 })
-      .toArray();
-  } catch (error) {
-    console.error('❌ Failed to load jobs:', error);
-  }
+  const jobs = await db
+    .collection<Job>('jobs')
+    .find({})
+    .sort({ createdAt: -1 })
+    .toArray();
 
   return (
     <>
@@ -41,9 +36,7 @@ export default async function JobsPage() {
                   className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
                 >
                   <h2 className="text-xl font-semibold text-blue-700">{job.title}</h2>
-                  <p className="text-gray-700">
-                    {job.company} - {job.location}
-                  </p>
+                  <p className="text-gray-700">{job.company} - {job.location}</p>
                   <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded mt-2 inline-block">
                     {job.type}
                   </span>
