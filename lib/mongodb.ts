@@ -1,17 +1,36 @@
 import { MongoClient } from 'mongodb';
 
-// MongoDB client instance
-const client = new MongoClient(process.env.MONGODB_URI as string);
+const uri = process.env.MONGODB_URI as string;
 
-// Function to connect to the database
-export async function connectToDatabase() {
-  try {
-    // Connect to MongoDB if not already connected
-    await client.connect();
-    const db = client.db(); // Default database (you can specify if needed)
-    return db;
-  } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
-    throw new Error('Failed to connect to database');
+if (!uri) {
+  throw new Error('Please define the MONGODB_URI environment variable');
+}
+
+// Maintain a cached connection in dev to prevent multiple connections on reloads
+let client: MongoClient;
+let clientPromise: Promise<MongoClient>;
+
+declare global {
+  // Allow global var usage in TypeScript
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
+}
+
+if (process.env.NODE_ENV === 'development') {
+  if (!global._mongoClientPromise) {
+    client = new MongoClient(uri, {
+      tlsAllowInvalidCertificates: true, // Optional: avoid SSL errors on Vercel
+    });
+    global._mongoClientPromise = client.connect();
   }
+  clientPromise = global._mongoClientPromise;
+} else {
+  client = new MongoClient(uri, {
+    tlsAllowInvalidCertificates: true,
+  });
+  clientPromise = client.connect();
+}
+
+export async function connectToDatabase() {
+  const client = await clientPromise;
+  return client.db(); // optional: specify db name like client.db("hirehub")
 }
