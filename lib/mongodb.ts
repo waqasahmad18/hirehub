@@ -8,17 +8,10 @@ if (!uri) {
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
-// ✅ Use NodeJS.Global to extend types for globalThis
-declare global {
-  namespace NodeJS {
-    interface Global {
-      _mongoClientPromise?: Promise<MongoClient>;
-    }
-  }
-}
-
-// @ts-ignore
-const globalWithMongo = global as NodeJS.Global;
+// Use globalThis to store the Mongo client promise
+const globalWithMongo = globalThis as {
+  _mongoClientPromise?: Promise<MongoClient>;
+};
 
 if (process.env.NODE_ENV === 'development') {
   if (!globalWithMongo._mongoClientPromise) {
